@@ -465,10 +465,9 @@ hook.Add("TTT2StaminaRegen", "Sliding Ability", function(ply, modifierTbl)
         return true -- block other modifiers
     end
 end)
-
 hook.Add("TTT2StaminaDrain", "Sliding Ability", function(ply, modifierTbl)
     if ply.SlidingAbility_IsSliding then
         modifierTbl[1] = 0
-        return true -- block other modifiers
+        return true
     end
 end)
