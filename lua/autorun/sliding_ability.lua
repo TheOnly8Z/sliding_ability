@@ -185,7 +185,7 @@ hook.Add("SetupMove", "Check sliding", function(ply, mv, cmd)
     if IsFirstTimePredicted() and not ply:Crouching() and ply.SlidingAbility_IsSliding then
         EndSliding(ply)
     end
-    
+
     -- Actual calculation of movement
     local CT = CurTime()
     if (ply:Crouching() and ply.SlidingAbility_IsSliding) or (CLIENT and SlidingBacktrack[CT]) then
@@ -291,7 +291,7 @@ hook.Add("SetupMove", "Check sliding", function(ply, mv, cmd)
 
         return
     end
-    
+
     -- Initial check to see if we can do it
     if ply.SlidingAbility_IsSliding then return end
     if not ply:OnGround() then return end
@@ -301,7 +301,9 @@ hook.Add("SetupMove", "Check sliding", function(ply, mv, cmd)
     -- if not mv:KeyDown(IN_SPEED) then return end -- This disables sliding for some people for some reason
     if not mv:KeyDown(bit.bor(IN_FORWARD, IN_BACK, IN_MOVELEFT, IN_MOVERIGHT)) then return end
     if CurTime() < ply.SlidingAbility_SlidingStartTime + CVarCooldown:GetFloat() then return end
-    if math.abs(ply:GetWalkSpeed() - ply:GetRunSpeed()) < 25 then return end
+    if not TTT2 and math.abs(ply:GetWalkSpeed() - ply:GetRunSpeed()) < 25 then return end
+
+    if TTT2 and not ply.isSprinting then return end -- In TTT2, RunSpeed and WalkSpeed is the same, and sprinting is handled separately
 
     local v = mv:GetVelocity()
     local speed = v:Length()
@@ -399,7 +401,7 @@ hook.Add("UpdateAnimation", "Sliding aim pose parameters", function(ply, velocit
         if EnhancedCameraTwo then l = EnhancedCameraTwo.entity end
         if not IsValid(l) then return end
     end
-    
+
     local dp = ply:GetPos() - (l.SlidingAbility_SlidingPreviousPosition or ply:GetPos())
     local dp2d = Vector(dp.x, dp.y)
     dp:Normalize()
@@ -454,4 +456,19 @@ hook.Add("CalcViewModelView", "Sliding view model tilt", function(w, vm, op, oa,
     if timefrac == 0 then return end
     wp:Add(LerpVector(timefrac, Vector(), LocalToWorld(Vector(0, 2, -6), Angle(), Vector(), wa)))
     wa:RotateAroundAxis(wa:Forward(), Lerp(timefrac, 0, -45))
+end)
+
+-- Do not let the player gain or lose stamina while sliding
+hook.Add("TTT2StaminaRegen", "Sliding Ability", function(ply, modifierTbl)
+    if ply.SlidingAbility_IsSliding then
+        modifierTbl[1] = 0
+        return true -- block other modifiers
+    end
+end)
+
+hook.Add("TTT2StaminaDrain", "Sliding Ability", function(ply, modifierTbl)
+    if ply.SlidingAbility_IsSliding then
+        modifierTbl[1] = 0
+        return true -- block other modifiers
+    end
 end)
